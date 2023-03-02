@@ -23,6 +23,7 @@ class Subscription:
       delta = self.until - date.today()
       return delta.days
 
+
 class SubTrack:
   def __init__(self):
     self.subs = {}
@@ -51,7 +52,7 @@ class SubTrack:
       if 'until' in sub:
         subscr.until = sub['until']
       self.subs[title] = subscr
-    
+
   def is_active(self, sub):
     if not 'active' in sub:
       return True
@@ -101,9 +102,12 @@ class SubTrack:
     i = 0
     for sub in self.subs:
       i += 1
-      table.add_row([i, self.subs[sub].title, f"{self.subs[sub].price_monthly:>6.2f}", self.subs[sub].until, self.subs[sub].CC(), self.subs[sub].Saving()])
-    table.add_row(['', 'SUMMARY Month', f"{self.price_monthly_sum:>6.2f}", '', '', f"{self.price_monthly_cc_sum:>6.2f}"])
-    table.add_row(['', 'SUMMARY Year', f"{self.price_yearly_sum:>6.2f}", '', '', f"{self.price_yearly_cc_sum:>6.2f}"])
+      table.add_row([i, self.subs[sub].title, f"{self.subs[sub].price_monthly:>6.2f}",
+                     self.subs[sub].until, self.subs[sub].CC(), self.subs[sub].Saving()])
+    table.add_row(['', 'SUMMARY Month',
+                   f"{self.price_monthly_sum:>6.2f}", '', '', f"{self.price_monthly_cc_sum:>6.2f}"])
+    table.add_row(
+        ['', 'SUMMARY Year', f"{self.price_yearly_sum:>6.2f}", '', '', f"{self.price_yearly_cc_sum:>6.2f}"])
     table.set_cols_align(['l', 'l', 'r', 'l', 'c', 'r'])
     print(table.draw())
 
@@ -117,9 +121,12 @@ class SubTrack:
     ccsubs = [sub for sub in self.subs if self.subs[sub].cc == True]
     for sub in ccsubs:
       i += 1
-      table.add_row([i, self.subs[sub].title, f"{self.subs[sub].price_monthly:>6.2f}", self.subs[sub].until, self.subs[sub].DaysLeft()])
-    table.add_row(['', 'SUMMARY Month', f"{self.price_monthly_cc_sum:>6.2f}", '', ''])
-    table.add_row(['', 'SUMMARY Year', f"{self.price_yearly_cc_sum:>6.2f}", '', ''])
+      table.add_row([i, self.subs[sub].title,
+                     f"{self.subs[sub].price_monthly:>6.2f}", self.subs[sub].until, self.subs[sub].DaysLeft()])
+    table.add_row(
+        ['', 'SUMMARY Month', f"{self.price_monthly_cc_sum:>6.2f}", '', ''])
+    table.add_row(
+        ['', 'SUMMARY Year', f"{self.price_yearly_cc_sum:>6.2f}", '', ''])
     table.set_cols_align(['l', 'l', 'r', 'l', 'c'])
     print(table.draw())
 
@@ -127,7 +134,7 @@ class SubTrack:
     print("========================================")
     print("=== PLAIN TEXT SUBSCRIPTION TRACKER ====")
     print("========================================")
-  
+
 
 import argparse
 import tomllib
@@ -137,24 +144,24 @@ from texttable import Texttable
 st = SubTrack()
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-l", "--list", help = "List subscriptions", action='store', nargs="*")
-parser.add_argument("-cc", help = "List cancellation candidates", action='store', nargs="*")
+parser.add_argument(
+    'filename', help="Path to subscriptions file", default='./subscriptions.toml', nargs="?")
+parser.add_argument("-l", "--list", help="List subscriptions",
+                    action='store', nargs="*")
+parser.add_argument(
+    "-cc", help="List cancellation candidates", action='store', nargs="*")
 args = parser.parse_args()
 
+with open(args.filename, "rb") as f:
+  data = tomllib.load(f)
+  data = dict(sorted(data.items()))
 
-filename = "subscriptions.toml"
+  for sub in data:
+    st.add_subscription(sub, data[sub])
 
-with open(filename, "rb") as f:
-    data = tomllib.load(f)
-    data = dict(sorted(data.items()))
-
-    for sub in data:
-      st.add_subscription(sub, data[sub])
-
-    if args.list is not None:
-      st.print_list()
-    elif args.cc is not None:
-      st.print_cc_list()
-    else:
-      st.print_summary()
-
+  if args.list is not None:
+    st.print_list()
+  elif args.cc is not None:
+    st.print_cc_list()
+  else:
+    st.print_summary()
